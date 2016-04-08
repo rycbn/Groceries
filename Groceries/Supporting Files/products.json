@@ -1,0 +1,23 @@
+{
+	"Products": [{
+		"id": 1,
+		"name": "Peas",
+		"price": 0.95,
+		"priceInfo": "per bag"
+	}, {
+		"id": 2,
+		"name": "Eggs",
+		"price": 2.10,
+		"priceInfo": "per dozen"
+	}, {
+		"id": 3,
+		"name": "Milk",
+		"price": 1.30,
+		"priceInfo": "per bottle"
+	}, {
+		"id": 4,
+		"name": "Beans",
+		"price": 0.73,
+		"priceInfo": "per can"
+	}]
+}
