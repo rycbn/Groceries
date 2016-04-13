@@ -71,13 +71,8 @@ extension ProductViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.opaque = true
-        tableView.clearsContextBeforeDrawing = true
-        tableView.clipsToBounds = true
-        tableView.autoresizesSubviews = true
+        tableView.exclusiveTouch = true
         tableView.tableFooterView = UIView(frame: CGRectZero)
-        tableView.multipleTouchEnabled = false
-        tableView.allowsMultipleSelection = false
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: CellIdentifier.TableView)
         view.addSubview(tableView)
         

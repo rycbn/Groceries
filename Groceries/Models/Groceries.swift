@@ -16,7 +16,7 @@ class Groceries: NSObject {
     var delegate: GroceriesDelegate!
     
     func getCurrencyExchangeFromAPI(source source: String) {
-        TaskConfig.sharedInstance().getLiveCurrency { (results, error) in
+        TaskConfig().getLiveCurrency { (results, error) in
             if results == nil {
                 self.delegate.ApiError()
             }

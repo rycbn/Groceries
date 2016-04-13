@@ -95,10 +95,10 @@ class TaskConfig: NSObject {
         return (!urlVars.isEmpty ? "?" : "") + urlVars.joinWithSeparator("&")
     }
     // MARK:- Shared Instance
-    class func sharedInstance() -> TaskConfig {
-        struct Singleton {
-            static var sharedInstance = TaskConfig()
-        }
-        return Singleton.sharedInstance
-    }
+    //class func sharedInstance() -> TaskConfig {
+    //    struct Singleton {
+    //        static var sharedInstance = TaskConfig()
+    //    }
+    //    return Singleton.sharedInstance
+    //}
 }
