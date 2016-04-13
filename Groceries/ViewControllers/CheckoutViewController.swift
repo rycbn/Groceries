@@ -173,13 +173,9 @@ extension CheckoutViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.opaque = true
-        tableView.clearsContextBeforeDrawing = true
-        tableView.clipsToBounds = true
-        tableView.autoresizesSubviews = true
+        tableView.exclusiveTouch = true
+        tableView.rowHeight = Height.BasketCell
         tableView.tableFooterView = UIView(frame: CGRectZero)
-        tableView.multipleTouchEnabled = false
-        tableView.allowsMultipleSelection = false
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: CellIdentifier.TableView)
         view.addSubview(tableView)
         
@@ -291,14 +287,21 @@ extension CheckoutViewController {
         backgroundView.removeFromSuperview()
     }
 }
-// MARK:- UIPickerViewDataSource, UIPickerViewDelegate
-extension CheckoutViewController: UIPickerViewDataSource, UIPickerViewDelegate {
+// MARK:- UIPickerViewDataSource
+extension CheckoutViewController: UIPickerViewDataSource {
     func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
         return 1
     }
     func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return pickerData.count
     }
+    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        currency = pickerData[row]
+        return currency.code
+    }
+}
+// MARK:- UIPickerViewDelegate
+extension CheckoutViewController: UIPickerViewDelegate {
     func pickerView(pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat {
         return Width.PickerView
     }
@@ -312,18 +315,11 @@ extension CheckoutViewController: UIPickerViewDataSource, UIPickerViewDelegate {
         NSUserDefaults.standardUserDefaults().setValue(currencyRateSelected, forKey: UserDefaults.CurrencyRate)
         NSUserDefaults.standardUserDefaults().synchronize()
     }
-    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        currency = pickerData[row]
-        return currency.code
-    }
 }
-// MARK:- UITableViewDataSource, UITableViewDelegate
-extension CheckoutViewController: UITableViewDataSource, UITableViewDelegate {
+// MARK:- UITableViewDataSource
+extension CheckoutViewController: UITableViewDataSource {
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 1
-    }
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return Height.BasketCell
     }
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableData.count
@@ -397,8 +393,14 @@ extension CheckoutViewController: UITableViewDataSource, UITableViewDelegate {
         cell.exclusiveTouch = true
         cell.selectionStyle = .None
         cell.setNeedsDisplay()
-        cell.setNeedsLayout()
+        cell.layoutIfNeeded()
         cell.setNeedsUpdateConstraints()
         return cell
+    }
+}
+// MARK:- UITableViewDelegate
+extension CheckoutViewController: UITableViewDelegate {
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return Height.BasketCell
     }
 }

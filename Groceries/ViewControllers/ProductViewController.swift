@@ -72,6 +72,7 @@ extension ProductViewController {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.exclusiveTouch = true
+        tableView.rowHeight = UITableViewAutomaticDimension
         tableView.tableFooterView = UIView(frame: CGRectZero)
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: CellIdentifier.TableView)
         view.addSubview(tableView)
@@ -114,13 +115,10 @@ extension ProductViewController {
         }
     }
 }
-// MARK:- UITableViewDataSource, UITableViewDelegate
-extension ProductViewController: UITableViewDataSource, UITableViewDelegate {
+// MARK:- UITableViewDataSource
+extension ProductViewController: UITableViewDataSource {
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 1
-    }
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return Height.Cell
     }
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableData.count
@@ -142,6 +140,12 @@ extension ProductViewController: UITableViewDataSource, UITableViewDelegate {
         cell.setNeedsLayout()
         cell.setNeedsUpdateConstraints()
         return cell
+    }
+}
+// MARK:- UITableViewDelegate
+extension ProductViewController: UITableViewDelegate {
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return UITableViewAutomaticDimension
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: true)

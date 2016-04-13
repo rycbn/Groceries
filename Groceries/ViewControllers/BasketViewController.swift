@@ -175,13 +175,9 @@ extension BasketViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.opaque = true
-        tableView.clearsContextBeforeDrawing = true
-        tableView.clipsToBounds = true
-        tableView.autoresizesSubviews = true
+        tableView.exclusiveTouch = true
+        tableView.rowHeight = Height.BasketCell
         tableView.tableFooterView = UIView(frame: CGRectZero)
-        tableView.multipleTouchEnabled = false
-        tableView.allowsMultipleSelection = false
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: CellIdentifier.TableView)
         view.addSubview(tableView)
         
@@ -273,13 +269,10 @@ extension BasketViewController {
         self.presentViewController(alert, animated: true, completion: nil)
     }
 }
-// MARK:- UITableViewDataSource, UITableViewDelegate
-extension BasketViewController: UITableViewDataSource, UITableViewDelegate {
+// MARK:- UITableViewDataSource
+extension BasketViewController: UITableViewDataSource {
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 1
-    }
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return Height.BasketCell
     }
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableData.count
@@ -376,5 +369,11 @@ extension BasketViewController: UITableViewDataSource, UITableViewDelegate {
         cell.setNeedsLayout()
         cell.setNeedsUpdateConstraints()
         return cell
+    }
+}
+// MARK:- UITableViewDelegate
+extension BasketViewController: UITableViewDelegate {
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return Height.BasketCell
     }
 }
