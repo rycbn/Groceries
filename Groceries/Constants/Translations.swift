@@ -36,4 +36,7 @@ struct Translation {
     static let QuantityErrorTitle = "Quantity Error"
     static let Quantity = "Quantity"
     static let ConfirmOrder = "Confirm order"
+    static let DataNotAvailable = "Data not available"
+    static let Sorry = "Sorry"
+    static let FetchDataErrorMessage = "Could not fetch data, please try again."
 }

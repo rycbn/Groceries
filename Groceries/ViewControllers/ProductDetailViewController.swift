@@ -60,7 +60,7 @@ extension ProductDetailViewController {
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
         fetchRequest.predicate = NSPredicate(format: "id = %@", itemData.id!)
         do {
-            let results = try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [CartItem]
+            let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             if results.count > 0 {
                 cartData = results.first!
                 qtyString = String(cartData.quantity!)
@@ -216,11 +216,11 @@ extension ProductDetailViewController {
     }
     func addToBasket(sender: UIButton) {
         addSpinner()
-        let cartItemEntity = NSEntityDescription.entityForName(EntityName.CartItem, inManagedObjectContext: appDelegate().coreDataStack.context)
+        let cartItemEntity = NSEntityDescription.entityForName(EntityName.CartItem, inManagedObjectContext: objContext())
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
         fetchRequest.predicate = NSPredicate(format: "id = %@", itemData.id!)
         do {
-            let results = try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [CartItem]
+            let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             if results.count > 0 {
                 cartData = results.first!
                 if isEditMode {
@@ -251,7 +251,7 @@ extension ProductDetailViewController {
                 }
             }
             else {
-                let item = CartItem(entity: cartItemEntity!, insertIntoManagedObjectContext: appDelegate().coreDataStack.context)
+                let item = CartItem(entity: cartItemEntity!, insertIntoManagedObjectContext: objContext())
                 item.id = itemData.id!
                 item.amount = itemData.price!
                 item.quantity = Int(qtyString)

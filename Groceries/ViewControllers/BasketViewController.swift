@@ -66,10 +66,11 @@ extension BasketViewController {
             self.tableView.reloadData()
         })
         do {
-            try appDelegate().coreDataStack.context.executeRequest(asyncFetchRequestCart)
+            try objContext().executeRequest(asyncFetchRequestCart)
         }
-        catch let error as NSError {
-            print("Could not fetch \(error), \(error.userInfo)")
+        catch {
+            displayAlertWithTitle(Translation.Sorry, message: Translation.FetchDataErrorMessage, viewController: self)
+            //print("Could not fetch \(error), \(error.userInfo)")
         }
     }
     func configureNavigationBar() {
@@ -115,9 +116,9 @@ extension BasketViewController {
     }
     func configureHeaderLabel() {
         func getItemString() -> String {
-            return CartItem.getTotal().0 == 1 ? Translation.Item.lowercaseString : Translation.Items.lowercaseString
+            return getCartItem() == 1 ? Translation.Item.lowercaseString : Translation.Items.lowercaseString
         }
-        let totalItem = CartItem.getTotal().cart
+        let totalItem = getCartItem()
         let totalAmount = CartItem.getTotal().amount
         let currencyCode = ConstantKeys.GBP
         let totalAmountInString = currencyValueStyle(totalAmount)

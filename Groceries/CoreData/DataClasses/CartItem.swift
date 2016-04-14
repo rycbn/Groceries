@@ -19,7 +19,7 @@ class CartItem: NSManagedObject {
         var subTotal: Double = 0.0
         var grandTotal: Double = 0.0
         do {
-            let items = try AppDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [CartItem]
+            let items = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             for item in items {
                 totalCartItem = totalCartItem + Int(item.quantity!)
                 subTotal = Double(item.quantity!) * Double(item.amount!)
@@ -38,7 +38,7 @@ class CartItem: NSManagedObject {
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
         fetchRequest.predicate = NSPredicate(format: "id = %li", id)
         do {
-            let results = try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [CartItem]
+            let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             if results.count > 0 {
                 data = results.first!
                 qty = String(data!.quantity!)
@@ -55,7 +55,7 @@ class CartItem: NSManagedObject {
     }
     // MARK:- DELETE
     class func deleteCart(dataObj: NSManagedObject) {
-        appDelegate().coreDataStack.context.deleteObject(dataObj)
+        objContext().deleteObject(dataObj)
         appDelegate().coreDataStack.saveContext()
     }
     // MARK: - DELETE
@@ -63,7 +63,7 @@ class CartItem: NSManagedObject {
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         do {
-            try appDelegate().coreDataStack.context.executeRequest(deleteRequest)
+            try objContext().executeRequest(deleteRequest)
         }
         catch let error as NSError {
             print("Error: unable to delete data \(error)")
@@ -74,7 +74,7 @@ class CartItem: NSManagedObject {
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
         fetchRequest.predicate = NSPredicate(format: "id = %li", id)
         do {
-            let results = try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [CartItem]
+            let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             let cartData = results.first!
             cartData.quantity = qty
             appDelegate().coreDataStack.saveContext()

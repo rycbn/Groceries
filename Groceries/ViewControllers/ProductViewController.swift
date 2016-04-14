@@ -60,10 +60,11 @@ extension ProductViewController {
             self.tableView.reloadData()
         })
         do {
-            try appDelegate().coreDataStack.context.executeRequest(asyncFetchRequest)
+            try objContext().executeRequest(asyncFetchRequest)
         }
-        catch let error as NSError {
-            print("Could not fetch \(error), \(error.userInfo)")
+        catch {
+            displayAlertWithTitle(Translation.Sorry, message: Translation.FetchDataErrorMessage, viewController: self)
+            //print("Could not fetch \(error), \(error.userInfo)")
         }
     }
     func configureTableView() {
@@ -126,18 +127,24 @@ extension ProductViewController: UITableViewDataSource {
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Value1, reuseIdentifier: CellIdentifier.TableView)
         let item = tableData[indexPath.row]
-        cell.textLabel?.text = String(format: "%@ (%@)", item.name!, item.priceInfo!)
+        if let name = item.name, let priceInfo = item.priceInfo, price = item.price {
+            cell.textLabel?.text = String(format: "%@ (%@)", name, priceInfo)
+            cell.detailTextLabel?.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(Double(price)))
+        }
+        else {
+            cell.textLabel?.text = Translation.DataNotAvailable
+            cell.detailTextLabel?.text = Translation.DataNotAvailable
+        }
         cell.textLabel?.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         cell.textLabel?.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
 
-        cell.detailTextLabel?.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(Double(item.price!)))
         cell.detailTextLabel?.font = UIFont(name: FontNameCalibri.Bold, size: FontSize.SuperSmall)
         cell.detailTextLabel?.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         
         cell.exclusiveTouch = true
         cell.selectionStyle = .None
         cell.setNeedsDisplay()
-        cell.setNeedsLayout()
+        cell.layoutIfNeeded()
         cell.setNeedsUpdateConstraints()
         return cell
     }

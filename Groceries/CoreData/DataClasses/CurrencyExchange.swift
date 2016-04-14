@@ -23,15 +23,15 @@ class CurrencyExchange: NSManagedObject {
     class func count() -> Int {
         var error: NSError? = nil
         let fetchRequest = NSFetchRequest(entityName: EntityName.CurrencyExchange)
-        let count = appDelegate().coreDataStack.context.countForFetchRequest(fetchRequest, error: &error)
+        let count = objContext().countForFetchRequest(fetchRequest, error: &error)
         return count
     }
     // MARK:- INSERT
     class func insert(data: [String: AnyObject], source: String) {
-        let entity = NSEntityDescription.entityForName(EntityName.CurrencyExchange, inManagedObjectContext: appDelegate().coreDataStack.context)
+        let entity = NSEntityDescription.entityForName(EntityName.CurrencyExchange, inManagedObjectContext: objContext())
         let quotes = data[JsonResponseKeys.Quotes] as! [String: AnyObject]
         for quote in quotes {
-            let item = CurrencyExchange(entity: entity!, insertIntoManagedObjectContext: appDelegate().coreDataStack.context)
+            let item = CurrencyExchange(entity: entity!, insertIntoManagedObjectContext: objContext())
             var itemKey = quote.0
             let index: String.Index = itemKey.startIndex.advancedBy(3)
             itemKey = itemKey.substringFromIndex(index)
@@ -59,7 +59,7 @@ class CurrencyExchange: NSManagedObject {
         let fetchRequest = NSFetchRequest(entityName: EntityName.CurrencyExchange)
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         do {
-            try appDelegate().coreDataStack.context.executeRequest(deleteRequest)
+            try objContext().executeRequest(deleteRequest)
         }
         catch let error as NSError {
             print("Error: unable to delete data \(error)")

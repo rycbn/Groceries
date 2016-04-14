@@ -15,7 +15,7 @@ class Product: NSManagedObject {
     class func count() -> Int {
         var error: NSError? = nil
         let fetchRequest = NSFetchRequest(entityName: EntityName.Product)
-        let count = appDelegate().coreDataStack.context.countForFetchRequest(fetchRequest, error: &error)
+        let count = objContext().countForFetchRequest(fetchRequest, error: &error)
         return count
     }
     class func getData(id: Int) -> Product {
@@ -23,7 +23,7 @@ class Product: NSManagedObject {
         let fetchRequest = NSFetchRequest(entityName: EntityName.Product)
         fetchRequest.predicate = NSPredicate(format: "id = %li", id)
         do {
-            let results = try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [Product]
+            let results = try objContext().executeFetchRequest(fetchRequest) as! [Product]
             data = results.first!
         }
         catch let error as NSError {
@@ -33,10 +33,10 @@ class Product: NSManagedObject {
     }
     // MARK:- INSERT
     class func insert(data: [String: AnyObject]) {
-        let entity = NSEntityDescription.entityForName(EntityName.Product, inManagedObjectContext: appDelegate().coreDataStack.context)
+        let entity = NSEntityDescription.entityForName(EntityName.Product, inManagedObjectContext: objContext())
         let products = data[JsonResponseKeys.Products] as! NSArray
         for product in products {
-            let item = Product(entity: entity!, insertIntoManagedObjectContext: appDelegate().coreDataStack.context)
+            let item = Product(entity: entity!, insertIntoManagedObjectContext: objContext())
             item.id = product[JsonResponseKeys.Id] as? NSNumber
             item.name = product[JsonResponseKeys.Name] as? String
             item.price = product[JsonResponseKeys.Price] as? NSNumber

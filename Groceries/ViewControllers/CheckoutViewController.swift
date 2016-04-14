@@ -63,7 +63,7 @@ extension CheckoutViewController {
             self.tableView.reloadData()
         })
         do {
-            try appDelegate().coreDataStack.context.executeRequest(asyncFetchRequestCart)
+            try objContext().executeRequest(asyncFetchRequestCart)
         }
         catch let error as NSError {
             print("Could not fetch \(error), \(error.userInfo)")
@@ -84,7 +84,7 @@ extension CheckoutViewController {
             }
         })
         do {
-            try appDelegate().coreDataStack.context.executeRequest(asyncFetchRequestExchange)
+            try objContext().executeRequest(asyncFetchRequestExchange)
         }
         catch let error as NSError {
             print("Could not fetch \(error), \(error.userInfo)")

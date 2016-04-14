@@ -7,7 +7,14 @@
 //
 
 import UIKit
+import CoreData
 
 func appDelegate() -> AppDelegate {
     return UIApplication.sharedApplication().delegate as! AppDelegate
+}
+func objContext() -> NSManagedObjectContext {
+    return appDelegate().coreDataStack.context
+}
+func objSaveContext(){
+    appDelegate().coreDataStack.saveContext()
 }

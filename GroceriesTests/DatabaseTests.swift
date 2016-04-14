@@ -37,7 +37,7 @@ class DatabaseTests: XCTestCase {
     func testEntityName() {
         let fetchRequest = NSFetchRequest(entityName: "Product")
         do {
-            try appDelegate().coreDataStack.context.executeFetchRequest(fetchRequest) as! [Product]
+            try objContext().executeFetchRequest(fetchRequest) as! [Product]
         }
         catch let error as NSError {
             print("Error: \(error)" + "description: \(error.localizedDescription)")
