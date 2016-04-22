@@ -17,12 +17,9 @@ class Groceries: NSObject {
     
     func getCurrencyExchangeFromAPI(source source: String) {
         TaskConfig().getLiveCurrency { (results, error) in
-            if results == nil {
-                self.delegate.ApiError()
-            }
-            else {
-                let success: Bool = (results![JsonResponseKeys.Success] as? Bool)!
-                let timestamp = results![JsonResponseKeys.TimeStamp] as? NSTimeInterval
+            if let results = results {
+                let success: Bool = (results[JsonResponseKeys.Success] as? Bool)!
+                let timestamp = results[JsonResponseKeys.TimeStamp] as? NSTimeInterval
                 let downloadDate = NSUserDefaults.standardUserDefaults().objectForKey(UserDefaults.CurrencyDownloadDate) as? NSTimeInterval
                 if success {
                     if isTimeIntervalEqualToAnother(timestamp1: downloadDate, timestamp2: timestamp) {
@@ -37,7 +34,7 @@ class Groceries: NSObject {
                     }
                     else {
                         CurrencyExchange.delete()
-                        CurrencyExchange.insert(results!, source: source)
+                        CurrencyExchange.insert(results, source: source)
                     }
                     NSUserDefaults.standardUserDefaults().setValue(timestamp, forKey: UserDefaults.CurrencyDownloadDate)
                     NSUserDefaults.standardUserDefaults().synchronize()
@@ -53,6 +50,8 @@ class Groceries: NSObject {
                         
                     }
                 }
+            } else {
+                self.delegate.ApiError()
             }
         }
     }

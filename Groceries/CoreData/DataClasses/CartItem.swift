@@ -21,9 +21,11 @@ class CartItem: NSManagedObject {
         do {
             let items = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             for item in items {
-                totalCartItem = totalCartItem + Int(item.quantity!)
-                subTotal = Double(item.quantity!) * Double(item.amount!)
-                grandTotal = grandTotal + subTotal
+                if let quantity = item.quantity, let amount = item.amount {
+                    totalCartItem = totalCartItem + Int(quantity)
+                    subTotal = Double(quantity) * Double(amount)
+                    grandTotal = grandTotal + subTotal
+                }
             }
         }
         catch let error as NSError {
@@ -31,7 +33,7 @@ class CartItem: NSManagedObject {
         }
         return (totalCartItem, Double(grandTotal))
     }
-    class func getData(id: Int) -> (data: CartItem?, qty: String, total: Double) {
+    class func getData(id: Int) -> (data: CartItem, qty: String, total: Double) {
         var data: CartItem!
         var qty: String!
         var total: Double!
@@ -40,9 +42,11 @@ class CartItem: NSManagedObject {
         do {
             let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             if results.count > 0 {
-                data = results.first!
-                qty = String(data!.quantity!)
-                total = Double(qty)! * Double(data!.amount!)
+                data = results[0]
+                if let quantity = data.quantity, let amount = data.amount {
+                    qty = String(quantity)
+                    total = Double(quantity) * Double(amount)
+                }
             }
             else {
                 qty = "0"
@@ -51,7 +55,7 @@ class CartItem: NSManagedObject {
         catch let error as NSError {
             print("Error: \(error)" + "description: \(error.localizedDescription)")
         }
-        return (data!, qty!, total!)
+        return (data, qty, total)
     }
     // MARK:- DELETE
     class func deleteCart(dataObj: NSManagedObject) {
@@ -75,7 +79,7 @@ class CartItem: NSManagedObject {
         fetchRequest.predicate = NSPredicate(format: "id = %li", id)
         do {
             let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
-            let cartData = results.first!
+            let cartData = results[0]
             cartData.quantity = qty
             appDelegate().coreDataStack.saveContext()
         }

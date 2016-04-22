@@ -29,13 +29,17 @@ func hasCellularCoverage() -> Bool {
 }
 
 func isNetworkOrCellularCoverageReachable() -> Bool  {
-    let reachability = Reachability.reachabilityForInternetConnection()
-    return (reachability!.isReachable() || hasCellularCoverage())
+    if let reachability = Reachability.reachabilityForInternetConnection() {
+        return (reachability.isReachable() || hasCellularCoverage())
+    }
+    return false
 }
 
 func isReachableViaWifi() -> Bool {
-    let reachability = Reachability.reachabilityForInternetConnection()
-    return reachability!.isReachableViaWiFi()
+    if let reachability = Reachability.reachabilityForInternetConnection() {
+        return reachability.isReachableViaWiFi()
+    }
+    return false
 }
 
 func getDefaultCurrencyExchange() -> (code: String?, rate: Double?, found: Bool) {
@@ -60,7 +64,9 @@ func currencyValueStyle(price: NSNumber) -> String {
     var string = String()
     let formatter = NSNumberFormatter()
     formatter.numberStyle = .CurrencyStyle
-    string = formatter.stringFromNumber(price)!
+    if let price = formatter.stringFromNumber(price) {
+        string = price
+    }
     let index: String.Index = string.startIndex.advancedBy(1)
     string = string.substringFromIndex(index)
     return string

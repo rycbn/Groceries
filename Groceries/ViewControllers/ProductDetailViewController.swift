@@ -57,23 +57,25 @@ class ProductDetailViewController: UIViewController {
 // MARK:- UI Configuration
 extension ProductDetailViewController {
     func configureFetchData() {
-        let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
-        fetchRequest.predicate = NSPredicate(format: "id = %@", itemData.id!)
-        do {
-            let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
-            if results.count > 0 {
-                cartData = results.first!
-                qtyString = String(cartData.quantity!)
+        if let itemId = itemData.id {
+            let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
+            fetchRequest.predicate = NSPredicate(format: "id = %@", itemId)
+            do {
+                let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
+                if results.count > 0 {
+                    cartData = results[0]
+                    if let quantity = cartData.quantity {
+                        qtyString = String(quantity)
+                    }
+                }
+                else {
+                    qtyString = "1"
+                }
             }
-            else {
-                qtyString = "1"
+            catch let error as NSError {
+                print("Error: \(error)" + "description: \(error.localizedDescription)")
             }
         }
-        catch let error as NSError {
-            print("Error: \(error)" + "description: \(error.localizedDescription)")
-        }
-        //cartData = CartItem.getData(Int(itemData.id!)).0
-        //qtyString = CartItem.getData(Int(itemData.id!)).1
     }
     func configureNavigationBar() {
         title = String(format: "%@: (%li)", Translation.TotalGroceries, CartItem.getTotal().cart)
@@ -85,9 +87,11 @@ extension ProductDetailViewController {
         navigationItem.rightBarButtonItem = basketBarButtonItem(target: self)
     }
     func configureItemNameLabel() {
+        let productName = itemData.name ?? Translation.DataNotAvailable
+        let productPriceInfo = itemData.priceInfo ?? Translation.DataNotAvailable
         itemNameLabel = UILabel()
         itemNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        itemNameLabel.text = String(format: "%@ (%@)", itemData.name!, itemData.priceInfo!)
+        itemNameLabel.text = String(format: "%@ (%@)", productName, productPriceInfo)
         itemNameLabel.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         itemNameLabel.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         itemNameLabel.textAlignment = .Left
@@ -100,9 +104,10 @@ extension ProductDetailViewController {
         itemNameLabel.widthAnchor.constraintEqualToConstant(Width.LabelRegular).active = true
     }
     func configureItemPriceLabel() {
+        let productPrice = itemData.price ?? 0
         itemPriceLabel = UILabel()
         itemPriceLabel.translatesAutoresizingMaskIntoConstraints = false
-        itemPriceLabel.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(Double(itemData.price!)))
+        itemPriceLabel.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(productPrice))
         itemPriceLabel.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         itemPriceLabel.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         itemPriceLabel.textAlignment = .Left
@@ -188,14 +193,18 @@ extension ProductDetailViewController {
         }
     }
     func addOverlayWithMessage(message message: String) {
-        spinner.runSpinnerWithMessage(parentViewController!.view, message: message)
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithMessage(pvc, message: message)
+        }
     }
     func removeOverlay() {
         spinner.dismiss()
     }
     func addSpinner() {
-        spinner.runSpinnerWithIndicator(parentViewController!.view)
-        spinner.start()
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithIndicator(pvc)
+            spinner.start()
+        }
     }
     func removeSpinner() {
         spinner.stop()
@@ -216,15 +225,14 @@ extension ProductDetailViewController {
     }
     func addToBasket(sender: UIButton) {
         addSpinner()
-        let cartItemEntity = NSEntityDescription.entityForName(EntityName.CartItem, inManagedObjectContext: objContext())
         let fetchRequest = NSFetchRequest(entityName: EntityName.CartItem)
-        fetchRequest.predicate = NSPredicate(format: "id = %@", itemData.id!)
+        fetchRequest.predicate = NSPredicate(format: "id = %@", itemData.id ?? 0)
         do {
             let results = try objContext().executeFetchRequest(fetchRequest) as! [CartItem]
             if results.count > 0 {
-                cartData = results.first!
+                cartData = results[0]
                 if isEditMode {
-                    cartData.quantity = Int(qtyString)!
+                    cartData.quantity = qtyString.toInt()
                     removeSpinner()
                     addOverlayWithMessage(message: Translation.AddedToBasket)
                     appDelegate().coreDataStack.saveContext()
@@ -234,7 +242,8 @@ extension ProductDetailViewController {
                 }
                 else {
                     var totalQty = 0
-                    totalQty = Int(cartData.quantity!) + Int(qtyString)!
+                    let quantity = cartData.quantity ?? 0
+                    totalQty = Int(quantity) + qtyString.toInt()
                     isValidQty = validateQuantity(String(totalQty))
                     if isValidQty {
                         removeSpinner()
@@ -251,16 +260,18 @@ extension ProductDetailViewController {
                 }
             }
             else {
-                let item = CartItem(entity: cartItemEntity!, insertIntoManagedObjectContext: objContext())
-                item.id = itemData.id!
-                item.amount = itemData.price!
-                item.quantity = Int(qtyString)
-
-                removeSpinner()
-                addOverlayWithMessage(message: Translation.AddedToBasket)
-                appDelegate().coreDataStack.saveContext()
-                NSNotificationCenter.defaultCenter().postNotificationName(Notification.Reload, object: self)
-                self.performSelector(Selector(Selectors.RemoveOverlay), withObject: nil, afterDelay: 0.5)
+                if let cartItemEntity = NSEntityDescription.entityForName(EntityName.CartItem, inManagedObjectContext: objContext()) {
+                    let item = CartItem(entity: cartItemEntity, insertIntoManagedObjectContext: objContext())
+                    item.id = itemData.id ?? 0
+                    item.amount = itemData.price ?? 0
+                    item.quantity = qtyString.toInt()
+                    
+                    removeSpinner()
+                    addOverlayWithMessage(message: Translation.AddedToBasket)
+                    appDelegate().coreDataStack.saveContext()
+                    NSNotificationCenter.defaultCenter().postNotificationName(Notification.Reload, object: self)
+                    self.performSelector(Selector(Selectors.RemoveOverlay), withObject: nil, afterDelay: 0.5)
+                }
             }
         }
         catch let error as NSError {
@@ -275,9 +286,11 @@ extension ProductDetailViewController {
             textField.keyboardType = .NumberPad
         }
         addQtyAlertAction = UIAlertAction(title: Translation.Add, style: .Default) { (action:UIAlertAction) -> Void in
-            self.qtyString = qtyTextField.text!
-            let qty = String(format: "%@: %li", ConstantKeys.Qty, Int(self.qtyString)!)
-            self.quantityButton.setTitle(qty, forState: .Normal)
+            if let qtyString = qtyTextField.text {
+                self.qtyString = qtyString
+                let qty = String(format: "%@: %li", ConstantKeys.Qty, self.qtyString.toInt())
+                self.quantityButton.setTitle(qty, forState: .Normal)
+            }
         }
         addQtyAlertAction.enabled = false
 
@@ -285,8 +298,10 @@ extension ProductDetailViewController {
             queue: NSOperationQueue.mainQueue()) {_ in
                 qtyTextField = alert.textFields![0]
                 var isValid = false
-                if !qtyTextField.text!.isEmpty && qtyTextField.text!.characters.count < 3 && validateQuantity(qtyTextField.text!) {
-                    isValid = true
+                if let qtyTextField = qtyTextField.text {
+                    if !qtyTextField.isEmpty && qtyTextField.characters.count < 3 && validateQuantity(qtyTextField) {
+                        isValid = true
+                    }
                 }
                 self.addToBasketButton.alpha = isValid ? 1.0 : 0.5
                 self.addQtyAlertAction.enabled = isValid
@@ -307,9 +322,11 @@ extension ProductDetailViewController {
         }
         addQtyAlertAction = UIAlertAction(title: Translation.Save, style: .Default) { (action:UIAlertAction) -> Void in
             self.isEditMode = true
-            self.qtyString = qtyTextField.text!
-            let qty = String(format: "%@: %li", ConstantKeys.Qty, Int(self.qtyString)!)
-            self.quantityButton.setTitle(qty, forState: .Normal)
+            if let qtyString = qtyTextField.text {
+                self.qtyString = qtyString
+                let qty = String(format: "%@: %li", ConstantKeys.Qty, self.qtyString.toInt())
+                self.quantityButton.setTitle(qty, forState: .Normal)
+            }
         }
         addQtyAlertAction.enabled = false
 
@@ -317,8 +334,10 @@ extension ProductDetailViewController {
             queue: NSOperationQueue.mainQueue()) {_ in
                 qtyTextField = alert.textFields![0]
                 var isValid = false
-                if !qtyTextField.text!.isEmpty && qtyTextField.text!.characters.count < 3 && validateQuantity(qtyTextField.text!) {
-                    isValid = true
+                if let qtyTextField = qtyTextField.text {
+                    if !qtyTextField.isEmpty && qtyTextField.characters.count < 3 && validateQuantity(qtyTextField) {
+                        isValid = true
+                    }
                 }
                 self.addQtyAlertAction.enabled = isValid
         }

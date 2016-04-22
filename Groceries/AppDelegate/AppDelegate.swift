@@ -18,7 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
 
         importProductJsonDataIfNeeded()
-        
+
         UINavigationBar.appearance().titleTextAttributes = [NSFontAttributeName: UIFont(name: FontNameCalibri.Bold, size: FontSize.Small)!]
         UIBarButtonItem.appearance().setTitleTextAttributes([NSFontAttributeName: UIFont(name: FontNameCalibri.Bold, size: FontSize.Tiny)!], forState: .Normal)
         UIBarButtonItem.appearance().tintColor = UIColor.colorFromHexRGB(Color.Blue)
@@ -45,18 +45,22 @@ extension AppDelegate {
         }
     }
     func importProductJsonData() {
-        let jsonFilePath = JsonDefault.Product
-        let jsonFileData = NSData(contentsOfFile: jsonFilePath!)
-        do {
-            let jsonFile = try NSJSONSerialization.JSONObjectWithData(jsonFileData!, options: .MutableContainers)
-            insertJsonProductData(jsonFile as? [String : AnyObject])
-        }
-        catch let error as NSError {
-            print("Erorr: \(error.localizedDescription)")
+        if let jsonFilePath = JsonDefault.Product {
+            if let jsonFileData = NSData(contentsOfFile: jsonFilePath) {
+                do {
+                    let jsonFile = try NSJSONSerialization.JSONObjectWithData(jsonFileData, options: .MutableContainers)
+                    insertJsonProductData(jsonFile as? [String : AnyObject])
+                }
+                catch let error as NSError {
+                    print("Erorr: \(error.localizedDescription)")
+                }
+            }
         }
     }
     func insertJsonProductData(results: [String: AnyObject]?) {
-        Product.insert(results!)
+        if let results = results {
+            Product.insert(results)
+        }
     }
 }
 

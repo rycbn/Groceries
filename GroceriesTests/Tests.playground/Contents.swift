@@ -16,12 +16,14 @@ func isTimeIntervalEqualToAnother(timestamp1 timestamp1: NSTimeInterval?, timest
 isTimeIntervalEqualToAnother(timestamp1: 1458593529, timestamp2: 1458636549)
 
 // Test currency style
-let price = 1234.36 // 123.45 // 1234567.89
+let price = 0 // 123.45 // 1234567.89
 func currencyValueStyle(price: NSNumber) -> String {
     var string = String()
     let formatter = NSNumberFormatter()
     formatter.numberStyle = .CurrencyStyle
-    string = formatter.stringFromNumber(price)!
+    if let price = formatter.stringFromNumber(price) {
+        string = price
+    }
     let index: String.Index = string.startIndex.advancedBy(1)
     string = string.substringFromIndex(index)
     return string
@@ -40,3 +42,17 @@ func validateQuantity(candidate: String) -> Bool {
     return isValid
 }
 validateQuantity(qty)
+
+let qry = "1"
+
+extension String {
+    func toInt() -> Int {
+        return Int(self)!
+    }
+    func toDouble() -> Double {
+        return Double(self)!
+    }
+}
+
+print(qry.toInt())
+qry.toDouble()

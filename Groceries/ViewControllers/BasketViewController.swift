@@ -209,14 +209,18 @@ extension BasketViewController {
         }
     }
     func addSpinner() {
-        spinner.runSpinnerWithIndicator(parentViewController!.view)
-        spinner.start()
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithIndicator(pvc)
+            spinner.start()
+        }
     }
     func removeSpinner() {
         spinner.stop()
     }
     func addOverlayWithMessage(message message: String) {
-        spinner.runSpinnerWithMessage(parentViewController!.view, message: message)
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithMessage(pvc, message: message)
+        }
     }
     func removeOverlay() {
         spinner.dismiss()
@@ -243,13 +247,16 @@ extension BasketViewController {
         var qtyTextField = UITextField()
         let alert = UIAlertController(title: Translation.PleaseEditQuantity, message: Translation.Maximum99, preferredStyle: .Alert)
         alert.addTextFieldWithConfigurationHandler { (textField: UITextField) -> Void in
-            textField.text = String(cartData!.quantity!)
+            if let quantity = cartData.quantity {
+                textField.text = String(quantity)
+            }
             textField.keyboardType = .NumberPad
         }
         addQtyAlertAction = UIAlertAction(title: Translation.Save, style: .Default) { (action:UIAlertAction) -> Void in
             self.addOverlayWithMessage(message: Translation.PleaseWait)
-            let qtyString = qtyTextField.text!
-            CartItem.updateCartQty(tag, qty: Int(qtyString)!)
+            if let qtyString = qtyTextField.text {
+                CartItem.updateCartQty(tag, qty: qtyString.toInt())
+            }
             NSNotificationCenter.defaultCenter().postNotificationName(Notification.Reload, object: self)
             self.performSelector(Selector(Selectors.RemoveOverlay), withObject: nil, afterDelay: 0.5)
         }
@@ -259,8 +266,10 @@ extension BasketViewController {
             queue: NSOperationQueue.mainQueue()) {_ in
                 qtyTextField = alert.textFields![0]
                 var isValid = false
-                if !qtyTextField.text!.isEmpty && qtyTextField.text!.characters.count < 3 && validateQuantity(qtyTextField.text!) {
-                    isValid = true
+                if let qtyTextField = qtyTextField.text {
+                    if !qtyTextField.isEmpty && qtyTextField.characters.count < 3 && validateQuantity(qtyTextField) {
+                        isValid = true
+                    }
                 }
                 self.addQtyAlertAction.enabled = isValid
         }
@@ -281,16 +290,20 @@ extension BasketViewController: UITableViewDataSource {
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Default, reuseIdentifier: CellIdentifier.TableView)
         let cart = tableData[indexPath.row]
-        let product = Product.getData(Int(cart.id!))
+        let cartId = cart.id ?? 0
+        let product = Product.getData(Int(cartId))
         
         var itemNameLabel: UILabel!
         var itemPriceLabel: UILabel!
         var quantityButton: UIButton!
         var deleteButton: UIButton!
 
+        let productName = product.name ?? Translation.DataNotAvailable
+        let productPriceInfo = product.priceInfo ?? Translation.DataNotAvailable
+        
         itemNameLabel = UILabel()
         itemNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        itemNameLabel.text = String(format: "%@ (%@)", product.name!, product.priceInfo!)
+        itemNameLabel.text = String(format: "%@ (%@)", productName, productPriceInfo)
         itemNameLabel.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         itemNameLabel.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         itemNameLabel.textAlignment = .Left
@@ -302,9 +315,11 @@ extension BasketViewController: UITableViewDataSource {
         itemNameLabel.leadingAnchor.constraintEqualToAnchor(cell.leadingAnchor, constant: Padding.Left.Table).active = true
         itemNameLabel.widthAnchor.constraintEqualToConstant(Width.LabelTable).active = true
 
+        let productPrice = product.price ?? 0
+        
         itemPriceLabel = UILabel()
         itemPriceLabel.translatesAutoresizingMaskIntoConstraints = false
-        itemPriceLabel.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(Double(product.price!)))
+        itemPriceLabel.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(productPrice))
         itemPriceLabel.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         itemPriceLabel.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         itemPriceLabel.textAlignment = .Left
@@ -316,11 +331,14 @@ extension BasketViewController: UITableViewDataSource {
         itemPriceLabel.leadingAnchor.constraintEqualToAnchor(itemNameLabel.leadingAnchor).active = true
         itemPriceLabel.widthAnchor.constraintEqualToAnchor(itemNameLabel.widthAnchor).active = true
 
+        let quantity = cart.quantity ?? 0
+        let tagId = cart.id ?? 0
+        
         quantityButton = UIButton(type: .Custom)
         quantityButton.translatesAutoresizingMaskIntoConstraints = false
         quantityButton.exclusiveTouch = true
-        quantityButton.setTitle(String(format:"%@: %@", ConstantKeys.Qty, cart.quantity!), forState: .Normal)
-        quantityButton.setTitle(String(format:"%@: %@", ConstantKeys.Qty, cart.quantity!), forState: .Highlighted)
+        quantityButton.setTitle(String(format:"%@: %@", ConstantKeys.Qty, quantity), forState: .Normal)
+        quantityButton.setTitle(String(format:"%@: %@", ConstantKeys.Qty, quantity), forState: .Highlighted)
         quantityButton.setImage(qtyImage(), forState: .Normal)
         quantityButton.setImage(qtyImage(), forState: .Highlighted)
         quantityButton.setTitleColor(UIColor.colorFromHexRGB(Color.White), forState: .Normal)
@@ -332,7 +350,7 @@ extension BasketViewController: UITableViewDataSource {
         quantityButton.layer.cornerRadius = 5.0
         quantityButton.isAccessibilityElement = true
         quantityButton.tintColor = UIColor.colorFromHexRGB(Color.White)
-        quantityButton.tag = Int(cart.id!)
+        quantityButton.tag = Int(tagId)
         quantityButton.addTarget(self, action: Selector(Selectors.EditQty), forControlEvents: .TouchUpInside)
         cell.addSubview(quantityButton)
         

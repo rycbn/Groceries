@@ -14,9 +14,16 @@ class ProductViewController: UIViewController {
     // MARK: Properties
     var tableView: UITableView!
     var basketButton: UIButton!
-
     var spinner = CustomSpinner()
-    var tableData = [Product]()
+
+    lazy var fetchRequestsController: NSFetchedResultsController = {
+        let idSort = NSSortDescriptor(key: "id", ascending: true)
+        let fetchRequest = NSFetchRequest(entityName: EntityName.Product)
+        fetchRequest.sortDescriptors = [idSort]
+        let fetchRequestsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: objContext(), sectionNameKeyPath: nil, cacheName: nil)
+        fetchRequestsController.delegate = self
+        return fetchRequestsController
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,19 +59,10 @@ extension ProductViewController {
         navigationItem.rightBarButtonItem = basketBarButtonItem(target: self)
     }
     func configureFetchData() {
-        let idSort = NSSortDescriptor(key: "id", ascending: true)
-        let fetchRequest = NSFetchRequest(entityName: EntityName.Product)
-        fetchRequest.sortDescriptors = [idSort]
-        let asyncFetchRequest = NSAsynchronousFetchRequest(fetchRequest: fetchRequest, completionBlock: { (result: NSAsynchronousFetchResult!) -> Void in
-            self.tableData = result.finalResult as! [Product]
-            self.tableView.reloadData()
-        })
         do {
-            try objContext().executeRequest(asyncFetchRequest)
-        }
-        catch {
+            try fetchRequestsController.performFetch()
+        } catch {
             displayAlertWithTitle(Translation.Sorry, message: Translation.FetchDataErrorMessage, viewController: self)
-            //print("Could not fetch \(error), \(error.userInfo)")
         }
     }
     func configureTableView() {
@@ -98,8 +96,10 @@ extension ProductViewController {
         }
     }
     func addSpinner() {
-        spinner.runSpinnerWithIndicator(parentViewController!.view)
-        spinner.start()
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithIndicator(pvc)
+            spinner.start()
+        }
     }
     func removeSpinner() {
         spinner.stop()
@@ -115,18 +115,8 @@ extension ProductViewController {
             displayAlertWithTitle(Translation.NetworkErrorTitle, message: Translation.NetworkErrorMessage, viewController: self)
         }
     }
-}
-// MARK:- UITableViewDataSource
-extension ProductViewController: UITableViewDataSource {
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return 1
-    }
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tableData.count
-    }
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .Value1, reuseIdentifier: CellIdentifier.TableView)
-        let item = tableData[indexPath.row]
+    func configureCell(cell: UITableViewCell, indexPath: NSIndexPath) {
+        let item = fetchRequestsController.objectAtIndexPath(indexPath) as! Product
         if let name = item.name, let priceInfo = item.priceInfo, price = item.price {
             cell.textLabel?.text = String(format: "%@ (%@)", name, priceInfo)
             cell.detailTextLabel?.text = String(format: "%@ %@", ConstantKeys.GBP, currencyValueStyle(Double(price)))
@@ -137,15 +127,29 @@ extension ProductViewController: UITableViewDataSource {
         }
         cell.textLabel?.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         cell.textLabel?.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
-
         cell.detailTextLabel?.font = UIFont(name: FontNameCalibri.Bold, size: FontSize.SuperSmall)
         cell.detailTextLabel?.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
-        
         cell.exclusiveTouch = true
-        cell.selectionStyle = .None
-        cell.setNeedsDisplay()
-        cell.layoutIfNeeded()
-        cell.setNeedsUpdateConstraints()
+    }
+}
+// MARK:- UITableViewDataSource
+extension ProductViewController: UITableViewDataSource {
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        if let sections = fetchRequestsController.sections {
+            return sections.count
+        }
+        return 0
+    }
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if let sections = fetchRequestsController.sections {
+            let sectionInfo = sections[section]
+            return sectionInfo.numberOfObjects
+        }
+        return 0
+    }
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier(CellIdentifier.TableView, forIndexPath: indexPath) 
+        configureCell(cell, indexPath: indexPath)
         return cell
     }
 }
@@ -156,10 +160,44 @@ extension ProductViewController: UITableViewDelegate {
     }
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
-        let itemData = tableData[indexPath.row]
+        let itemData = fetchRequestsController.objectAtIndexPath(indexPath) as! Product
         let pushVC = UIStoryboard.productDetailViewController() as ProductDetailViewController!
         pushVC.itemData = itemData
         self.navigationController?.pushViewController(pushVC, animated: true)
+    }
+}
+// MARK:- NSFetchedResultsControllerDelegate
+extension ProductViewController: NSFetchedResultsControllerDelegate {
+    func controllerWillChangeContent(controller: NSFetchedResultsController) {
+        tableView.beginUpdates()
+    }
+    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
+        switch type {
+        case .Insert:
+            if let indexPath = newIndexPath {
+                tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            }
+        case .Delete:
+            if let indexPath = indexPath {
+                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            }
+        case .Update:
+            if let indexPath = indexPath {
+                if let cell = tableView.cellForRowAtIndexPath(indexPath) {
+                    configureCell(cell, indexPath: indexPath)
+                }
+            }
+        case .Move:
+            if let indexPath = indexPath {
+                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            }
+            if let indexPath = newIndexPath {
+                tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            }
+        }
+    }
+    func controllerDidChangeContent(controller: NSFetchedResultsController) {
+        tableView.endUpdates()
     }
 }
 // MARK: GroceriesDelegate

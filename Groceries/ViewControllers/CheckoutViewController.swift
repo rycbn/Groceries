@@ -71,11 +71,11 @@ extension CheckoutViewController {
 
         let stringSort = NSSortDescriptor(key: "code", ascending: true)
         let fetchRequestExchange = NSFetchRequest(entityName: EntityName.CurrencyExchange)
-        currencyCode = isExchangeMode ? getDefaultCurrencyExchange().code! : ConstantKeys.GBP
+        currencyCode = isExchangeMode ? getDefaultCurrencyExchange().code ?? ConstantKeys.GBP : ConstantKeys.GBP
         fetchRequestExchange.sortDescriptors = [stringSort]
         let asyncFetchRequestExchange = NSAsynchronousFetchRequest(fetchRequest: fetchRequestExchange, completionBlock: { (result: NSAsynchronousFetchResult!) -> Void in
             self.pickerData = result.finalResult as! [CurrencyExchange]
-            self.currency = self.pickerData.first!
+            self.currency = self.pickerData[0]
             for (index, curr) in self.pickerData.enumerate() {
                 if curr.code == self.currencyCode {
                     self.currencySelectedIndex = index
@@ -104,7 +104,7 @@ extension CheckoutViewController {
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
 
         func getItemString() -> String {
-            return CartItem.getTotal().0 == 1 ? Translation.Item.lowercaseString : Translation.Items.lowercaseString
+            return CartItem.getTotal().cart == 1 ? Translation.Item.lowercaseString : Translation.Items.lowercaseString
         }
 
         let totalItem = CartItem.getTotal().cart
@@ -113,9 +113,9 @@ extension CheckoutViewController {
         var headerString = String()
         
         if isExchangeMode {
-            totalAmount = CurrencyExchange.conversion(CartItem.getTotal().amount, rate: getDefaultCurrencyExchange().rate!)
+            totalAmount = CurrencyExchange.conversion(CartItem.getTotal().amount, rate: getDefaultCurrencyExchange().rate ?? 1)
             totalAmountInString = currencyValueStyle(totalAmount)
-            currencyCode = getDefaultCurrencyExchange().code!
+            currencyCode = getDefaultCurrencyExchange().code ?? ConstantKeys.GBP
             headerString = String(format: "%@ (%li %@): %@ %@", Translation.BasketSubtotal, totalItem, getItemString(), currencyCode, totalAmountInString)
         }
         else {
@@ -195,7 +195,7 @@ extension CheckoutViewController {
         pickerView.layer.borderColor = UIColor.colorFromHexRGB(Color.Gray).CGColor
         pickerView.layer.borderWidth = 1.0
         pickerView.layer.cornerRadius = 5.0
-        parentViewController!.view.addSubview(pickerView)
+        parentViewController?.view.addSubview(pickerView)
         
         pickerView.centerXAnchor.constraintEqualToAnchor(view.centerXAnchor).active = true
         pickerView.centerYAnchor.constraintEqualToAnchor(view.centerYAnchor).active = true
@@ -216,7 +216,7 @@ extension CheckoutViewController {
         doneButton.layer.cornerRadius = 5.0
         doneButton.isAccessibilityElement = true
         doneButton.addTarget(self, action: Selector(Selectors.Done), forControlEvents: .TouchUpInside)
-        parentViewController!.view.addSubview(doneButton)
+        parentViewController?.view.addSubview(doneButton)
         
         doneButton.topAnchor.constraintEqualToAnchor(pickerView.bottomAnchor, constant: Padding.Top.Regular).active = true
         doneButton.centerXAnchor.constraintEqualToAnchor(super.view.centerXAnchor).active = true
@@ -228,7 +228,7 @@ extension CheckoutViewController {
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.backgroundColor = UIColor.colorFromHexRGB(Color.SlateGray)
         backgroundView.alpha = 0.50
-        parentViewController!.view.addSubview(backgroundView)
+        parentViewController?.view.addSubview(backgroundView)
         
         backgroundView.topAnchor.constraintEqualToAnchor(super.view.topAnchor).active = true
         backgroundView.leadingAnchor.constraintEqualToAnchor(super.view.leadingAnchor).active = true
@@ -261,8 +261,10 @@ extension CheckoutViewController {
         }
     }
     func addSpinner() {
-        spinner.runSpinnerWithIndicator(parentViewController!.view)
-        spinner.start()
+        if let pvc = parentViewController?.view {
+            spinner.runSpinnerWithIndicator(pvc)
+            spinner.start()
+        }
     }
     func removeSpinner() {
         spinner.stop()
@@ -308,8 +310,8 @@ extension CheckoutViewController: UIPickerViewDelegate {
     func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         currency = pickerData[row]
         currencySelectedIndex = row
-        currencyCodeSelected = currency.code!
-        currencyRateSelected = Double(currency.rate!)
+        currencyCodeSelected = currency.code ?? ConstantKeys.GBP
+        currencyRateSelected = Double(currency.rate ?? 1)
         
         NSUserDefaults.standardUserDefaults().setValue(currencyCodeSelected, forKey: UserDefaults.CurrencyCode)
         NSUserDefaults.standardUserDefaults().setValue(currencyRateSelected, forKey: UserDefaults.CurrencyRate)
@@ -327,10 +329,10 @@ extension CheckoutViewController: UITableViewDataSource {
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Default, reuseIdentifier: CellIdentifier.TableView)
         let cart = tableData[indexPath.row]
-        let product = Product.getData(Int(cart.id!))
-        let qty = cart.quantity!
+        let product = Product.getData(Int(cart.id ?? 0))
+        let qty = cart.quantity ?? 0
         
-        var price = Double(product.price!)
+        var price = Double(product.price ?? 0)
         var totalAmount = Double()
         var currencyCode = String()
         var itemNameLabel: UILabel!
@@ -338,8 +340,8 @@ extension CheckoutViewController: UITableViewDataSource {
         var totalLabel: UILabel!
         
         if isExchangeMode {
-            price = CurrencyExchange.conversion(Double(price), rate: getDefaultCurrencyExchange().rate!)
-            currencyCode = getDefaultCurrencyExchange().code!
+            price = CurrencyExchange.conversion(Double(price), rate: getDefaultCurrencyExchange().rate ?? 1)
+            currencyCode = getDefaultCurrencyExchange().code ?? ConstantKeys.GBP
         }
         else {
             currencyCode = ConstantKeys.GBP
@@ -348,9 +350,12 @@ extension CheckoutViewController: UITableViewDataSource {
         let totalAmountInString = currencyValueStyle(totalAmount)
         let priceInString = currencyValueStyle(price)
 
+        let productName = product.name ?? Translation.DataNotAvailable
+        let productPriceInfo = product.priceInfo ?? Translation.DataNotAvailable
+        
         itemNameLabel = UILabel()
         itemNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        itemNameLabel.text = String(format: "%@ (%@)", product.name!, product.priceInfo!)
+        itemNameLabel.text = String(format: "%@ (%@)", productName, productPriceInfo)
         itemNameLabel.font = UIFont(name: FontNameCalibri.Regular, size: FontSize.SuperSmall)
         itemNameLabel.textColor = UIColor.colorFromHexRGB(Color.SlateGray)
         itemNameLabel.textAlignment = .Left
