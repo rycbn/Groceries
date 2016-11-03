@@ -19,13 +19,14 @@ isTimeIntervalEqualToAnother(timestamp1: 1458593529, timestamp2: 1458636549)
 let price = 0 // 123.45 // 1234567.89
 func currencyValueStyle(price: NSNumber) -> String {
     var string = String()
-    let formatter = NSNumberFormatter()
-    formatter.numberStyle = .CurrencyStyle
-    if let price = formatter.stringFromNumber(price) {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    if let price = formatter.string(from: price) {
         string = price
     }
-    let index: String.Index = string.startIndex.advancedBy(1)
-    string = string.substringFromIndex(index)
+    let cuurectIndex = string.startIndex
+    let index: String.Index = string.index(after: cuurectIndex)
+    string = string.substring(from: index)
     return string
 }
 currencyValueStyle(price)
